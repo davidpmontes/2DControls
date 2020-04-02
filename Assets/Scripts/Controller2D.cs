@@ -50,6 +50,7 @@ public class Controller2D : RaycastController
         if (standingOnPlatform)
         {
             collisions.below = true;
+            SetFriction("");
         }
     }
 
@@ -167,7 +168,15 @@ public class Controller2D : RaycastController
                     moveAmount.x = moveAmount.y / Mathf.Tan(collisions.slopeAngle * Mathf.Deg2Rad) * Mathf.Sign(moveAmount.x);
                 }
 
-                collisions.below = directionY == -1;
+                if (directionY == -1)
+                {
+                    collisions.below = true;
+                    SetFriction(hit.collider.name);
+                }
+                else
+                {
+                    collisions.below = false;
+                }
                 collisions.above = directionY == 1;
             }
         }
@@ -202,6 +211,7 @@ public class Controller2D : RaycastController
             moveAmount.y = climbVelocityY;
             moveAmount.x = Mathf.Cos(slopeAngle * Mathf.Deg2Rad) * moveDistance * Mathf.Sign(moveAmount.x);
             collisions.below = true;
+            //SetFriction(hit.collider.name);
             collisions.climbingSlope = true;
             collisions.slopeAngle = slopeAngle;
             collisions.slopeNormal = slopeNormal;
@@ -241,11 +251,37 @@ public class Controller2D : RaycastController
                             collisions.slopeAngle = slopeAngle;
                             collisions.descendingSlope = true;
                             collisions.below = true;
+                            SetFriction(hit.collider.name);
                             collisions.slopeNormal = hit.normal;
                         }
                     }
                 }
             }
+        }
+    }
+
+    void SetFriction(string name)
+    {
+        if (name == "")
+        {
+            collisions.frictionFactor = 1f;
+            return;
+        }
+
+        switch(name.Substring(0, 5))
+        {
+            case "Rough":
+                collisions.frictionFactor = 0.05f;
+                break;
+            case "Slick":
+                collisions.frictionFactor = 10f;
+                break;
+            case "Norma":
+                collisions.frictionFactor = 1f;
+                break;
+            default:
+                collisions.frictionFactor = 1f;
+                break;
         }
     }
 
@@ -272,6 +308,8 @@ public class Controller2D : RaycastController
 
     public struct CollisionInfo
     {
+        public float frictionFactor;
+
         public bool above, below;
         public bool left, right;
 
@@ -287,6 +325,7 @@ public class Controller2D : RaycastController
 
         public void Reset()
         {
+            //frictionFactor = 1;
             above = false;
             below = false;
             left = false;

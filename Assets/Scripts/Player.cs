@@ -3,6 +3,12 @@
 [RequireComponent (typeof (Controller2D))]
 public class Player : MonoBehaviour
 {
+    [SerializeField]
+    private bool gravityEnabled;
+
+    [SerializeField]
+    private bool flyEnabled;
+
     [Header("Ground Jump Settings")]
 
     [SerializeField]
@@ -70,6 +76,7 @@ public class Player : MonoBehaviour
     private float maxJumpVelocity;
     private float minJumpVelocity;
     private float velocityXSmoothing;
+    private float velocityYSmoothing;
     private bool wallSliding;
     private int wallDirX;
 
@@ -104,18 +111,42 @@ public class Player : MonoBehaviour
     private void CalculateVelocity()
     {
         float targetVelocityX = directionalInput.x * moveSpeed;
+        float targetVelocityY = directionalInput.y * moveSpeed;
+
+
         if (AirControlEnabled)
         {
-            velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocityX, ref velocityXSmoothing, controller.collisions.below ? accelerationTimeGrounded : accelerationTimeAirborne);
+            velocity.x = Mathf.SmoothDamp(velocity.x,
+                                          targetVelocityX,
+                                          ref velocityXSmoothing,
+                                          controller.collisions.below ?
+                                                accelerationTimeGrounded * controller.collisions.frictionFactor :
+                                                accelerationTimeAirborne);
         }
         else
         {
             if (controller.collisions.below)
             {
-                velocity.x = Mathf.SmoothDamp(velocity.x, targetVelocityX, ref velocityXSmoothing, accelerationTimeGrounded);
+                velocity.x = Mathf.SmoothDamp(velocity.x,
+                                              targetVelocityX,
+                                              ref velocityXSmoothing,
+                                              accelerationTimeGrounded*
+                                                    controller.collisions.frictionFactor);
             }
         }
-        velocity.y += gravity * Time.deltaTime;
+
+        if (flyEnabled)
+        {
+            velocity.y = Mathf.SmoothDamp(velocity.y,
+                              targetVelocityY,
+                              ref velocityYSmoothing,
+                              controller.collisions.below ?
+                                    accelerationTimeGrounded * controller.collisions.frictionFactor :
+                                    accelerationTimeAirborne);
+        }
+
+        if (gravityEnabled)
+            velocity.y += gravity * Time.deltaTime;
     }
 
     private void HandleWallSliding()
